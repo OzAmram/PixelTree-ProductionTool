@@ -1,0 +1,68 @@
+****
+General recipe
+****
+
+cmsrel CMSSW_8_1_0
+cd CMSSW_8_1_0/src; cmsenv
+git clone https://github.com/cms-analysis/DPGAnalysis-SiPixelTools.git
+cd DPGAnalysis-SiPixelTools/PixelTrees/
+cp /afs/cern.ch/work/b/bmesic/public/17_05_pixel_tree_production_final/CMSSW_8_1_0/src/DPGAnalysis-SiPixelTools/PixelTrees/plugins/PixelTree.* plugins/
+cp /afs/cern.ch/work/b/bmesic/public/17_05_pixel_tree_production_final/CMSSW_8_1_0/src/DPGAnalysis-SiPixelTools/PixelTrees/plugins/SiPixelCoordinates.* plugins/
+scram b -j12
+cp -r /afs/cern.ch/work/b/bmesic/public/17_05_pixel_tree_production_final/CMSSW_8_1_0/src/DPGAnalysis-SiPixelTools/PixelTrees/tree_production_tool tree_production_tool
+
+# TreeProduction.py is the pixel tree production script.
+
+
+****
+Things to be done in general
+****
+
+1. Bril installation independant of anything else later, needed to get luminosities only!
+	pip install --install-option="--prefix=$HOME/.local" brilws
+
+2. Instalacija CMSSW (potrebna za das.py)
+	export SCRAM_ARCH=slc6_amd64_gcc530
+	cmsrel CMSSW_8_0_7_patch1
+	cd CMSSW_8_0_7_patch1/src
+	cmsenv
+	
+3. Potrebno za cmsRun inace javlja gresku: Unable to find plugin 'PixelTree' in category 'CMS EDM Framework Module'. Please check spelling of name.
+	git clone https://github.com/cms-analysis/DPGAnalysis-SiPixelTools.git
+	scram b -j12
+
+   If you get errors while compiling
+	scram b -j12 (there will be an error but just ignore it)
+	cd DPGAnalysis-SiPixelTools/PixelTrees
+	scram b -j12
+
+
+4. 
+	voms-proxy-init --voms cms --valid 168:00
+   Copy this temp in home and add ./x509up_u78012 into 0_submittor.sh
+	cp /tmp/x509up_u78012 .
+
+5. Understand tree_production.py
+
+
+****
+Always:
+****
+   if brilcal needed:
+	export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.0.3/bin:$PATH 
+   else:
+	export SCRAM_ARCH=slc6_amd64_gcc530
+	cd CMSSW_8_0_7_patch1/src ***** or any other CMSSW version
+	cmsenv
+	
+	voms-proxy-init --voms cms --valid 168:00
+
+
+
+
+TreeProduction script stored in .../DPGAnalysis-SiPixelTools/PixelTrees/2016
+
+*****
+Useful:
+
+das_client.py --query="config dataset=/ZeroBias/Run2016C-PromptReco-v2/RECO" --format=JSON --das-headers
