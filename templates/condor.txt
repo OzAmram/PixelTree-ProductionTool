@@ -1,0 +1,7 @@
+executable  =  <name>.sh
+universe    =  vanilla
+log         =  <name>.log
+initialdir  =  <working_directory>
+error       =  <name>.error
+getenv      =  True
+queue

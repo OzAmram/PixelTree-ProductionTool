@@ -13,23 +13,24 @@ class TreeProduction(object):
 
     self.print_nice('status', '\n**** Welcome to TreeProduction ****')
 
-    self.dataset          = '/RelValMinBias_13/CMSSW_8_1_0-81X_upgrade2017_realistic_v26_HLT2017-v1/GEN-SIM-RECO' 
-    self.run_number       = 'MC'
-    self.CMSSW_version    = 'CMSSW_8_1_0'
-    self.global_tag       = ''
+    self.dataset          = '/ExpressPhysics/Run2017B-Express-v1/FEVT'
+    self.run_number       = '297671' # '297664' #
+    self.CMSSW_version    = 'CMSSW_9_2_3_patch2'
+    self.global_tag       = '92X_dataRun2_Express_v2'
     self.SCRAM_ARCH       = 'slc6_amd64_gcc530'
 
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
-    self.number_of_events = '10'
-    self.number_of_jobs   = 1
+    self.number_of_events = '-1'
+    self.number_of_jobs   = 200
+    self.batch            = 'lxbatch' # 'condor' # 
 
     self.path_working_dir = os.path.dirname(os.path.abspath(__file__))
     self.path_batch       = os.path.join(self.path_working_dir, 'batch', self.run_number)
     self.path_templates   = os.path.join(self.path_working_dir, 'templates')
     self.path_log_file    = os.path.join(self.path_working_dir, 'log.txt')
     self.path_destination = {
-      'Pixel' : '/store/group/dpg_tracker_pixel/comm_pixel/PixelTree/2017/test',
+      'Pixel' : '/store/group/dpg_tracker_pixel/comm_pixel/PixelTree/2017/' + self.run_number,
       'LA'    : ''
     }
 
@@ -73,16 +74,16 @@ class TreeProduction(object):
     if not os.path.exists(_path_output_file) or self.force_all:
 
       _output_file  = open(_path_output_file, 'w')
-      # _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file run={0} dataset={1}"'.format(self.run_number, self.dataset), '--limit=0']
-      _command      = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file dataset={0}"'.format(self.dataset), '--limit=0']
+      _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file run={0} dataset={1}"'.format(self.run_number, self.dataset), '--limit=0']
+      # _command      = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file dataset={0}"'.format(self.dataset), '--limit=0']
+      print ' '.join(_command)
       _output       = sp.check_output(' '.join(_command), shell=True)
-      print _output
       _output_file.write(_output)
       _output_file.close
 
     _output_file = open(_path_output_file, 'r')
-    # self.list_of_input_files = _output_file.read().splitlines()
-    self.list_of_input_files = ['a']*self.number_of_jobs
+    self.list_of_input_files = _output_file.read().splitlines()
+    # self.list_of_input_files = ['a']*self.number_of_jobs
     _output_file.close
 
   def make_jobs(self):
@@ -120,6 +121,25 @@ class TreeProduction(object):
       _shell_script.write(_shell_template)
       _shell_script.close()
 
+      # ---------------
+      # condor_template
+      if self.batch == 'condor':
+
+        _condor_template_file = open(os.path.join(self.path_templates, 'condor.txt'), 'r')
+        _condor_template = _condor_template_file.read()
+        _condor_template_file.close()
+
+        _replace_strings_condor = {
+          '<name>'                 : os.path.join( _path_batch_dir, '_' + str(_i)),
+          '<working_directory>'    : _path_batch_dir,
+        }
+
+        for _r, _rw in _replace_strings_condor.iteritems():
+          _condor_template = _condor_template.replace(_r, _rw)
+
+        _condor_script = open( os.path.join( _path_batch_dir, '_' + str(_i) + '.txt'),'w')
+        _condor_script.write(_condor_template)
+        _condor_script.close()
 
       if self.tree_production == 'Pixel':
 
@@ -146,8 +166,6 @@ class TreeProduction(object):
 
         self.print_nice('status', 'Done: {0}'.format(os.path.join( _path_batch_dir, '_' + str(_i) + '.py')))
 
-
-
       elif self.tree_production == 'LA':
         self.print_nice('status', 'LA jobs!')
         # Add LA_template
@@ -161,17 +179,21 @@ class TreeProduction(object):
 
     _path_batch_dir = os.path.join(self.path_batch, self.tree_production)
 
-    # queue for batch
-    _q = 'cmscaf1nd'
-
     for _i, _f in enumerate(self.list_of_input_files):
 
       if _i > self.number_of_jobs - 1 and self.number_of_jobs != -1:
         continue
 
-      _batch_command = 'bsub -R \"pool>30000\" -q ' + _q + ' -J ' + self.run_number + '_' + str(_i) + ' < ' + _path_batch_dir + '/_' + str(_i) + '.sh'
-      self.print_nice('status', _batch_command)
-      sp.call( _batch_command, shell=True)
+      if self.batch == 'condor':
+        _condor_command = 'condor_submit ' + _path_batch_dir + '/_' + str(_i) + '.txt'
+        self.print_nice('status', _condor_command)
+        sp.call( _condor_command, shell=True)
+
+      elif self.batch == 'lxbatch':
+        _q              = 'cmscaf1nd' # queue for batch
+        _batch_command  = 'bsub -R \"pool>30000\" -q ' + _q + ' -J ' + self.run_number + '_' + str(_i) + ' < ' + _path_batch_dir + '/_' + str(_i) + '.sh'
+        self.print_nice('status', _batch_command)
+        sp.call( _batch_command, shell=True)
 
   def write_log_file(self):
     with open(self.path_log_file, "a") as _file:

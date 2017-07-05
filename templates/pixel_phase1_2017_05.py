@@ -1,26 +1,25 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('Demo')
+process = cms.Process("Demo")
 
-# -- Standard configurations
-process.load('Configuration.StandardSequences.Services_cff')
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
-process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
-
-# -- Log reports
 process.MessageLogger.cerr.threshold = 'INFO'
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.MessageLogger.categories.append('HLTrigReport')
 process.MessageLogger.categories.append('L1GtTrigReport')
 process.options = cms.untracked.PSet( SkipEvent = cms.untracked.vstring('ProductNotFound'), wantSummary = cms.untracked.bool(True) )
 
-# -- Global tag
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '<global_tag>', '')
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+process.GlobalTag.globaltag = '<global_tag>'
 
+# -- Database configuration
+process.load("CondCore.DBCommon.CondDBCommon_cfi")
+process.load("CondCore.DBCommon.CondDBSetup_cfi")
+
+# -- Conditions
+process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
+process.load("RecoVertex.BeamSpotProducer.BeamSpot_cfi")
 
 # -- Input files
 process.source = cms.Source(

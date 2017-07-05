@@ -1,4 +1,3 @@
-import os
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("Demo")
@@ -18,7 +17,7 @@ process.load("CondCore.DBCommon.CondDBCommon_cfi")
 process.load("CondCore.DBCommon.CondDBSetup_cfi")
 
 # -- Conditions
-process.load('Configuration/StandardSequences/MagneticField_AutoFromDBCurrent_cff')
+process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
 process.load("RecoVertex.BeamSpotProducer.BeamSpot_cfi")
 
@@ -66,7 +65,6 @@ process.PixelTree = cms.EDAnalyzer(
     "PixelTree",
     verbose                      = cms.untracked.int32(0),
     rootFileName                 = cms.untracked.string('<output_root_file_name>'),
-    #type                         = cms.untracked.string(getDataset(process.source.fileNames[0])),
     globalTag                    = process.GlobalTag.globaltag,
     dumpAllEvents                = cms.untracked.int32(0),
     PrimaryVertexCollectionLabel = cms.untracked.InputTag('offlinePrimaryVertices'),
@@ -79,6 +77,14 @@ process.PixelTree = cms.EDAnalyzer(
     L1GTReadoutRecordLabel       = cms.untracked.InputTag('gtDigis'),
     hltL1GtObjectMap             = cms.untracked.InputTag('hltL1GtObjectMap'),
     HLTResultsLabel              = cms.untracked.InputTag('TriggerResults::HLT')
+    associatePixel               = cms.bool(False),
+    associateStrip               = cms.bool(False),
+    associateRecoTracks          = cms.bool(False),
+    ROUList                      = cms.vstring(
+      'TrackerHitsPixelBarrelLowTof', 
+      'TrackerHitsPixelBarrelHighTof', 
+      'TrackerHitsPixelEndcapLowTof', 
+      'TrackerHitsPixelEndcapHighTof'),
     )
 
 # -- Path
