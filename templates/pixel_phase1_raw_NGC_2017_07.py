@@ -52,7 +52,7 @@ process.GainsReader = cms.ESSource("PoolDBESSource",
     toGet = cms.VPSet(
             cms.PSet(
                 record = cms.string('SiPixelGainCalibrationOfflineRcd'),
-        tag = cms.string('SiPixelGainCalibration_2017_v4')
+        tag = cms.string('SiPixelGainCalibration_2017_v3')
         )
             ),
     connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS'))
