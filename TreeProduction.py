@@ -13,192 +13,173 @@ class TreeProduction(object):
 
     self.print_nice('status', '\n**** Welcome to TreeProduction ****')
 
-    self.dataset          = '/ExpressPhysics/Run2017B-Express-v1/FEVT'
-    self.run_number       = '297671' # '297664' #
-    self.CMSSW_version    = 'CMSSW_9_2_3_patch2'
+    self.dataset          = '/ExpressCosmics/Run2017B-Express-v2/FEVT'
+    self.data_type        = 'cosmics' #'collisions' # 
+    self.run_number       = ['298901','298902','298903','298905']
+    self.CMSSW_version    = 'CMSSW_9_2_5_patch1'
     self.global_tag       = '92X_dataRun2_Express_v2'
     self.SCRAM_ARCH       = 'slc6_amd64_gcc530'
 
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
+    self.send_jobs        = True
     self.number_of_events = '-1'
     self.number_of_jobs   = 200
     self.batch            = 'lxbatch' # 'condor' # 
 
     self.path_working_dir = os.path.dirname(os.path.abspath(__file__))
-    self.path_batch       = os.path.join(self.path_working_dir, 'batch', self.run_number)
+    self.path_batch       = os.path.join(self.path_working_dir, 'batch')
     self.path_templates   = os.path.join(self.path_working_dir, 'templates')
-    self.path_log_file    = os.path.join(self.path_working_dir, 'log.txt')
     self.path_destination = {
-      'Pixel' : '/store/group/dpg_tracker_pixel/comm_pixel/PixelTree/2017/' + self.run_number,
+      'Pixel' : '/store/group/dpg_tracker_pixel/comm_pixel/PixelTree/2017/' + self.data_type,
       'LA'    : ''
     }
 
-    self.list_of_input_files= []
+    self.list_of_input_files = {}
 
     # When you call voms-proxy-init --voms cms --valid 168:00
     # As a result you get the output like /tmp/x509up_u78012
     # Then copy this x509up_u78012 wherever you want and this is voms_user_proxy
     self.voms_user_proxy  = '/afs/cern.ch/user/b/bmesic/x509up_u78012'
 
-
     self.print_nice('status', 'Dataset: {0}'.format(self.dataset))
-    self.print_nice('status', 'Run number: {0}'.format(self.run_number))
+    self.print_nice('status', 'Run number: {0}'.format(','.join(self.run_number)))
     self.print_nice('status', 'CMSSW version: {0}'.format(self.CMSSW_version))
     self.print_nice('status', 'global tag: {0}'.format(self.global_tag))
     self.print_nice('status', 'SCRAM_ARCH: {0}'.format(self.SCRAM_ARCH))    
 
     self.print_nice('status', '\nWorking directory: {0}'.format(self.path_working_dir))
 
-  # Not used right now
-  def get_run_informations_using_DAS(self):
-    self.print_nice('python_info', '\nCalled get_run_informations_using_DAS function.') 
-    _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="config dataset={0}"'.format(self.dataset), '--format=JSON', '--das-headers']
-    _output = json.loads(sp.check_output(' '.join(_command), shell=True).strip())
-    print _output
-
-  # working
-  def initialise_VOMS(self):
-    self.print_nice('python_info', '\nCalled initialise_VOMS function.')
-    _command = ['voms-proxy-init', '--voms', 'cms', '--valid', '168:00']
-    sp.call(_command)
-
   def get_list_of_input_files(self):
   
     self.print_nice('python_info', '\nCalled get_list_of_input_files function.')  
 
-    self.make_directory(self.path_batch)
-    _path_output_file = os.path.join(self.path_batch, self.run_number + '.txt')
+    for _r in self.run_number:
 
-    # If file does not exist or force redo call das_client
-    if not os.path.exists(_path_output_file) or self.force_all:
+      _path_batch       = self.make_directory( os.path.join( self.path_batch, self.tree_production, _r))
+      _path_output_file = os.path.join( self.path_batch, _r + '.txt')
 
-      _output_file  = open(_path_output_file, 'w')
-      _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file run={0} dataset={1}"'.format(self.run_number, self.dataset), '--limit=0']
-      # _command      = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file dataset={0}"'.format(self.dataset), '--limit=0']
-      print ' '.join(_command)
-      _output       = sp.check_output(' '.join(_command), shell=True)
-      _output_file.write(_output)
-      _output_file.close
+      # If file does not exist or force redo call das_client
+      if not os.path.exists(_path_output_file) or self.force_all:
 
-    _output_file = open(_path_output_file, 'r')
-    self.list_of_input_files = _output_file.read().splitlines()
-    # self.list_of_input_files = ['a']*self.number_of_jobs
-    _output_file.close
-
-  def make_jobs(self):
-    
-    self.print_nice('python_info', '\nCalled make_jobs function.')  
-
-    _path_batch_dir = os.path.join(self.path_batch, self.tree_production)
-    self.make_directory(_path_batch_dir)
-
-    for _i, _f in enumerate(self.list_of_input_files):
-
-      # if _i > 0:
-      #   continue
-
-      # ---------------
-      # shell_template
-
-      _shell_template_file = open(os.path.join(self.path_templates, 'shell.sh'), 'r')
-      _shell_template = _shell_template_file.read()
-      _shell_template_file.close()
-
-      _replace_strings_shell = {
-        '<SCRAM_ARCH>'                : self.SCRAM_ARCH,
-        '<X509_USER_PROXY>'           : self.voms_user_proxy,
-        '<working_directory>'         : self.path_working_dir,
-        '<path_python_file>'          : os.path.join( _path_batch_dir, '_' + str(_i) + '.py'),
-        '<root_file_name>'            : 'PixelTree_' + self.run_number + '_' + str(_i) + '.root',
-        '<root_file_name_destination>': self.path_destination[self.tree_production]
-      }
-
-      for _r, _rw in _replace_strings_shell.iteritems():
-        _shell_template = _shell_template.replace(_r, _rw)
-
-      _shell_script = open( os.path.join( _path_batch_dir, '_' + str(_i) + '.sh'),'w')
-      _shell_script.write(_shell_template)
-      _shell_script.close()
-
-      # ---------------
-      # condor_template
-      if self.batch == 'condor':
-
-        _condor_template_file = open(os.path.join(self.path_templates, 'condor.txt'), 'r')
-        _condor_template = _condor_template_file.read()
-        _condor_template_file.close()
-
-        _replace_strings_condor = {
-          '<name>'                 : os.path.join( _path_batch_dir, '_' + str(_i)),
-          '<working_directory>'    : _path_batch_dir,
-        }
-
-        for _r, _rw in _replace_strings_condor.iteritems():
-          _condor_template = _condor_template.replace(_r, _rw)
-
-        _condor_script = open( os.path.join( _path_batch_dir, '_' + str(_i) + '.txt'),'w')
-        _condor_script.write(_condor_template)
-        _condor_script.close()
-
-      if self.tree_production == 'Pixel':
-
-        # self.print_nice('status', 'Pixel jobs made!')
-
-        # Add pixel_template
-        _python_template_file = open(os.path.join(self.path_templates, 'pixel.py'), 'r')
-        _python_template      = _python_template_file.read()
-        _python_template_file.close()
-
-        _replace_strings_python = {
-          '<number_of_events>'            : self.number_of_events,
-          '<source_root_file_name>'       : _f,
-          '<output_root_file_name>'       : 'PixelTree_' + self.run_number + '_' + str(_i) + '.root',
-          '<global_tag>'                  : self.global_tag,
-        }
-
-        for _r, _rw in _replace_strings_python.iteritems():
-          _python_template = _python_template.replace(_r, _rw)
-
-        _python_script = open( os.path.join( _path_batch_dir, '_' + str(_i) + '.py'),'w')
-        _python_script.write(_python_template)
-        _python_script.close()
-
-        self.print_nice('status', 'Done: {0}'.format(os.path.join( _path_batch_dir, '_' + str(_i) + '.py')))
-
-      elif self.tree_production == 'LA':
-        self.print_nice('status', 'LA jobs!')
-        # Add LA_template
+        with open(_path_output_file, 'w') as _f:
+          _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file run={0} dataset={1}"'.format( _r, self.dataset), '--limit=0']
+          # _command      = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file dataset={0}"'.format(self.dataset), '--limit=0']
+          print ' '.join(_command)
+          _output  = sp.check_output(' '.join(_command), shell=True)
+          _f.write(_output)
 
       else:
-        self.print_nice('error', 'Incorrect tree_production flag! Check self.tree_production!')
+        self.print_nice('status', 'File already exists: {0}'.format(_path_output_file)) 
 
-  def send_jobs(self):
+      with open(_path_output_file, 'r') as _f:
+        self.list_of_input_files[_r] = _f.read().splitlines()
+        # self.list_of_input_files = ['a']*self.number_of_jobs
+  
+  def make_directory_eos(self):
 
-    self.print_nice('python_info', '\nCalled send_jobs function.')
+    self.print_nice('python_info', '\nCalled make_directory_eos function. Copy output of this function and run at EOS file') 
 
-    _path_batch_dir = os.path.join(self.path_batch, self.tree_production)
+    for _r in self.run_number:
+      print 'mkdir {0}'.format(_r)
 
-    for _i, _f in enumerate(self.list_of_input_files):
+  def make_send_jobs(self):
+    
+    self.print_nice('python_info', '\nCalled make_send_jobs function.')  
 
-      if _i > self.number_of_jobs - 1 and self.number_of_jobs != -1:
-        continue
+    for _rr, _lf in self.list_of_input_files.iteritems():
 
-      if self.batch == 'condor':
-        _condor_command = 'condor_submit ' + _path_batch_dir + '/_' + str(_i) + '.txt'
-        self.print_nice('status', _condor_command)
-        sp.call( _condor_command, shell=True)
+      self.print_nice('status', '\nWorking on run: {0}'.format(_rr))
 
-      elif self.batch == 'lxbatch':
-        _q              = 'cmscaf1nd' # queue for batch
-        _batch_command  = 'bsub -R \"pool>30000\" -q ' + _q + ' -J ' + self.run_number + '_' + str(_i) + ' < ' + _path_batch_dir + '/_' + str(_i) + '.sh'
-        self.print_nice('status', _batch_command)
-        sp.call( _batch_command, shell=True)
+      _path_batch_dir = self.make_directory( os.path.join(self.path_batch, self.tree_production, _rr))
 
-  def write_log_file(self):
-    with open(self.path_log_file, "a") as _file:
-        _file.write("appended text")
-      # add all informations
+      for _i, _f in enumerate(_lf):
+
+        if _i > self.number_of_jobs - 1 and self.number_of_jobs != -1:
+          continue
+
+        # ---------------
+        # shell_template
+        with open( os.path.join(self.path_templates, 'shell.sh'), 'r') as _shell_template_file:
+          _shell_template = _shell_template_file.read()
+    
+        _replace_strings_shell = {
+          '<SCRAM_ARCH>'                : self.SCRAM_ARCH,
+          '<X509_USER_PROXY>'           : self.voms_user_proxy,
+          '<working_directory>'         : self.path_working_dir,
+          '<path_python_file>'          : os.path.join( _path_batch_dir, '_' + str(_i) + '.py'),
+          '<root_file_name>'            : 'PixelTree_' + _rr + '_' + str(_i) + '.root',
+          '<root_file_name_destination>': os.path.join( self.path_destination[self.tree_production], _rr)
+        }
+
+        for _r, _rw in _replace_strings_shell.iteritems():
+          _shell_template = _shell_template.replace(_r, _rw)
+
+        with open( os.path.join( _path_batch_dir, '_' + str(_i) + '.sh'),'w') as _shell_script:
+          _shell_script.write(_shell_template)
+
+        # ---------------
+        # condor_template
+        if self.batch == 'condor':
+
+          with open(os.path.join(self.path_templates, 'condor.txt'), 'r') as _condor_template_file:
+            _condor_template = _condor_template_file.read()
+
+          _replace_strings_condor = {
+            '<name>'                 : os.path.join( _path_batch_dir, '_' + str(_i)),
+            '<working_directory>'    : _path_batch_dir,
+          }
+
+          for _r, _rw in _replace_strings_condor.iteritems():
+            _condor_template = _condor_template.replace(_r, _rw)
+
+          with open( os.path.join( _path_batch_dir, '_' + str(_i) + '.txt'),'w') as _condor_script:
+            _condor_script.write(_condor_template)
+    
+        if self.tree_production == 'Pixel':
+
+          # self.print_nice('status', 'Pixel jobs made!')
+
+          # Add pixel_template
+          with open(os.path.join(self.path_templates, 'pixel.py'), 'r') as _python_template_file:
+            _python_template      = _python_template_file.read()
+
+          _replace_strings_python = {
+            '<number_of_events>'            : self.number_of_events,
+            '<source_root_file_name>'       : _f,
+            '<output_root_file_name>'       : 'PixelTree_' + _rr + '_' + str(_i) + '.root',
+            '<global_tag>'                  : self.global_tag,
+          }
+
+          for _r, _rw in _replace_strings_python.iteritems():
+            _python_template = _python_template.replace(_r, _rw)
+
+          with open( os.path.join( _path_batch_dir, '_' + str(_i) + '.py'),'w') as _python_script:
+            _python_script.write(_python_template)
+
+          self.print_nice('status', 'Done: {0}'.format(os.path.join( _path_batch_dir, '_' + str(_i) + '.py')))
+
+        elif self.tree_production == 'LA':
+          self.print_nice('status', 'LA jobs!')
+          # Add LA_template
+
+        else:
+          self.print_nice('error', 'Incorrect tree_production flag! Check self.tree_production!')
+          continue
+
+        # Sending jobs
+        if self.send_jobs:
+
+          if self.batch == 'condor':
+            _condor_command = 'condor_submit ' + _path_batch_dir + '/_' + str(_i) + '.txt'
+            self.print_nice('status', _condor_command)
+            sp.call( _condor_command, shell=True)
+
+          elif self.batch == 'lxbatch':
+            _q              = 'cmscaf1nd' # queue for batch
+            _batch_command  = 'bsub -R \"pool>30000\" -q ' + _q + ' -J ' + _rr + '_' + str(_i) + ' < ' + _path_batch_dir + '/_' + str(_i) + '.sh'
+            self.print_nice('status', _batch_command)
+            sp.call( _batch_command, shell=True)
 
   def print_nice(self, print_type, *text):
 
@@ -226,11 +207,11 @@ class TreeProduction(object):
         if not os.path.isdir(directory):
           raise
 
+    return directory
+
 if __name__ == '__main__':
 
   t = TreeProduction()
-  # # t.initialise_VOMS() # Not used
   t.get_list_of_input_files()
-  t.make_jobs()
-  # t.send_jobs()
-  # t.write_log_file()
+  t.make_directory_eos()
+  t.make_send_jobs()
