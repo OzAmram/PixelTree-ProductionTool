@@ -12,20 +12,22 @@ class TreeProduction(object):
   def __init__(self):
 
     self.print_nice('status', '\n**** Welcome to TreeProduction ****')
-
-    self.dataset          = '/ExpressCosmics/Run2017B-Express-v2/FEVT'
-    self.data_type        = 'cosmics' #'collisions' # 
-    self.run_number       = ['298901','298902','298903','298905']
-    self.CMSSW_version    = 'CMSSW_9_2_5_patch1'
-    self.global_tag       = '92X_dataRun2_Express_v2'
+                                       
+    self.dataset          = '/ZeroBias/Run2017E-v1/RAW'
+    self.data_type        = 'collisions' #'cosmics' # 
+    self.run_number       = ['303832']
+    self.CMSSW_version    = 'CMSSW_9_2_12'
+    self.global_tag       = '92X_dataRun2_Express_v7'
     self.SCRAM_ARCH       = 'slc6_amd64_gcc530'
 
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
-    self.send_jobs        = True
+    self.send_jobs        = False
     self.number_of_events = '-1'
-    self.number_of_jobs   = 200
+    self.number_of_jobs   = 100
     self.batch            = 'lxbatch' # 'condor' # 
+
+    self.postfix          = '' #'_gainPBPv6_715'
 
     self.path_working_dir = os.path.dirname(os.path.abspath(__file__))
     self.path_batch       = os.path.join(self.path_working_dir, 'batch')
@@ -56,7 +58,7 @@ class TreeProduction(object):
 
     for _r in self.run_number:
 
-      _path_batch       = self.make_directory( os.path.join( self.path_batch, self.tree_production, _r))
+      _path_batch       = self.make_directory( os.path.join( self.path_batch, self.tree_production, _r + self.postfix))
       _path_output_file = os.path.join( self.path_batch, _r + '.txt')
 
       # If file does not exist or force redo call das_client
@@ -91,7 +93,7 @@ class TreeProduction(object):
 
       self.print_nice('status', '\nWorking on run: {0}'.format(_rr))
 
-      _path_batch_dir = self.make_directory( os.path.join(self.path_batch, self.tree_production, _rr))
+      _path_batch_dir = self.make_directory( os.path.join(self.path_batch, self.tree_production, _rr + self.postfix))
 
       for _i, _f in enumerate(_lf):
 
@@ -109,7 +111,7 @@ class TreeProduction(object):
           '<working_directory>'         : self.path_working_dir,
           '<path_python_file>'          : os.path.join( _path_batch_dir, '_' + str(_i) + '.py'),
           '<root_file_name>'            : 'PixelTree_' + _rr + '_' + str(_i) + '.root',
-          '<root_file_name_destination>': os.path.join( self.path_destination[self.tree_production], _rr)
+          '<root_file_name_destination>': os.path.join( self.path_destination[self.tree_production], _rr + self.postfix) 
         }
 
         for _r, _rw in _replace_strings_shell.iteritems():
