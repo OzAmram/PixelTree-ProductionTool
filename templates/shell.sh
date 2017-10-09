@@ -9,5 +9,5 @@ eval `scramv1 runtime -sh`
 cd -
 cmsRun <path_python_file>
 
-eos cp  <root_file_name> /eos/cms/<root_file_name_destination>/
+cp <root_file_name> /eos/cms/<root_file_name_destination>/
 rm <root_file_name> 
