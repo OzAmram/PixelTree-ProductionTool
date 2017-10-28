@@ -13,18 +13,19 @@ class TreeProduction(object):
 
     self.print_nice('status', '\n**** Welcome to TreeProduction ****')
                                        
-    self.dataset          = '/ZeroBias/Run2017E-v1/RAW'
-    self.data_type        = 'collisions' #'cosmics' # 
-    self.run_number       = ['303832']
-    self.CMSSW_version    = 'CMSSW_9_2_12'
-    self.global_tag       = '92X_dataRun2_Express_v7'
-    self.SCRAM_ARCH       = 'slc6_amd64_gcc530'
+    self.dataset          = '/ZeroBias/Run2017F-v1/RAW'
+    self.data_type        = 'collisions' #'cosmics'
+    self.run_number       = ['305207', '305406']
+    self.CMSSW_version    = 'CMSSW_9_4_0_pre3'
+    self.global_tag       = '94X_dataRun2_Prompt_Candidate_forTkDPG'
+    self.SCRAM_ARCH       = 'slc6_amd64_gcc630'
 
+    self.script_template  = 'raw' # 'reco' 'raw', 'cosmics', 'test'
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
-    self.send_jobs        = False
+    self.send_jobs        = True
     self.number_of_events = '-1'
-    self.number_of_jobs   = 100
+    self.number_of_jobs   = 20
     self.batch            = 'lxbatch' # 'condor' # 
 
     self.postfix          = '' #'_gainPBPv6_715'
@@ -65,6 +66,7 @@ class TreeProduction(object):
       if not os.path.exists(_path_output_file) or self.force_all:
 
         with open(_path_output_file, 'w') as _f:
+          # _command = ['das_client', '--query="file run={0} dataset={1}"'.format( _r, self.dataset), '--limit=0']
           _command = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file run={0} dataset={1}"'.format( _r, self.dataset), '--limit=0']
           # _command      = ['/cvmfs/cms.cern.ch/common/das_client', '--query="file dataset={0}"'.format(self.dataset), '--limit=0']
           print ' '.join(_command)
@@ -143,7 +145,7 @@ class TreeProduction(object):
           # self.print_nice('status', 'Pixel jobs made!')
 
           # Add pixel_template
-          with open(os.path.join(self.path_templates, 'pixel.py'), 'r') as _python_template_file:
+          with open(os.path.join(self.path_templates, 'pixel_{0}.py'.format(self.script_template)), 'r') as _python_template_file:
             _python_template      = _python_template_file.read()
 
           _replace_strings_python = {
