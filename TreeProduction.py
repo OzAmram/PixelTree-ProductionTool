@@ -23,7 +23,7 @@ class TreeProduction(object):
     self.script_template  = 'raw' # 'reco' 'raw', 'cosmics', 'test'
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
-    self.send_jobs        = True
+    self.send_jobs        = False
     self.number_of_events = '-1'
     self.number_of_jobs   = 20
     self.batch            = 'lxbatch' # 'condor' # 
@@ -85,7 +85,7 @@ class TreeProduction(object):
     self.print_nice('python_info', '\nCalled make_directory_eos function. Copy output of this function and run at EOS file') 
 
     for _r in self.run_number:
-      print 'mkdir {0}'.format(_r)
+      print 'mkdir {0}_{1}'.format(_r, self.postfix)
 
   def make_send_jobs(self):
     
