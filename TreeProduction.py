@@ -23,12 +23,12 @@ class TreeProduction(object):
     self.script_template  = 'raw' # 'reco' 'raw', 'cosmics', 'test'
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
-    self.send_jobs        = False
+    self.send_jobs        = True
     self.number_of_events = '-1'
     self.number_of_jobs   = 20
     self.batch            = 'lxbatch' # 'condor' # 
 
-    self.postfix          = '' #'_gainPBPv6_715'
+    self.postfix          = '_pre3' #'_gainPBPv6_715'
 
     self.path_working_dir = os.path.dirname(os.path.abspath(__file__))
     self.path_batch       = os.path.join(self.path_working_dir, 'batch')
@@ -85,7 +85,7 @@ class TreeProduction(object):
     self.print_nice('python_info', '\nCalled make_directory_eos function. Copy output of this function and run at EOS file') 
 
     for _r in self.run_number:
-      print 'mkdir {0}_{1}'.format(_r, self.postfix)
+      print 'mkdir {0}{1}'.format(_r, self.postfix)
 
   def make_send_jobs(self):
     
