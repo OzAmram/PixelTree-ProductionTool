@@ -49,7 +49,7 @@ int main(int argc, char **argv){
     pTree->GetEntry(0);
     int pTree_idx = 0;
 
-    Int_t detID, onEdge, onTrack, failType, used2D, tempID, spans2ROCs;
+    Int_t detID, onEdge, type, failType, used2D, tempID, spans2ROCs;
     Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy;
 
     TFile *f_out = TFile::Open(outFile_name, "recreate");
@@ -65,7 +65,7 @@ int main(int argc, char **argv){
     t_out->Branch("CRLy", &CRLy);
     t_out->Branch("onEdge", &onEdge);
     t_out->Branch("detID", &detID);
-    t_out->Branch("onTrack", &onTrack);
+    t_out->Branch("type", &type);
 
     char log_line[300];
     int roc_num;
@@ -140,7 +140,7 @@ int main(int argc, char **argv){
             SimHitLx = ClSimHitLx[i][0];
             SimHitLy = ClSimHitLy[i][0];
             detID = ClDetId[i];
-            onTrack = ClType[i];
+            type = ClType[i];
             nMatched++;
 
             t_out->Fill();
