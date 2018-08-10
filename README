@@ -1,0 +1,20 @@
+cmsrel CMSSW_10_2_0_pre6
+cd CMSSW_10_2_0_pre6/src
+cmsenv
+git cms-init
+git cms-merge-topic ozamram:dead_pixel_testing
+git clone https://github.com/cms-analysis/DPGAnalysis-SiPixelTools.git
+cd DPGAnalysis-SiPixelTools/
+#get rid of directories with build errors that aren't needed
+rm -rf PixelDBTools 
+rm -rf PixelTriplets
+scram b -j 20
+cd DPGAnalysis-SiPixelTools/PixelTrees
+git clone https://github.com/OzAmram/PixelTree-ProductionTool.git
+cd PixelTree-ProductionTool
+#run local jobs and redirect output to a log file, use GT realistic_v7 to avoid other sources of deadpixels
+cmsRun local_job.py > myLog.txt
+g++ -o testRun parse_log_and_pixeltree.C `root-config --cflags --glibs`
+./testRun PixelTree_deadpixel_test.root myLog.txt test_out.root
+
+
