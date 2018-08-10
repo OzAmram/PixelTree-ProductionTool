@@ -13,22 +13,22 @@ class TreeProduction(object):
 
     self.print_nice('status', '\n**** Welcome to TreeProduction ****')
                                        
-    self.dataset          = '/ZeroBias/Run2017G-v1/RAW'
+    self.dataset          = '/RelValTTbarLepton_13/CMSSW_10_0_0_pre3-100X_mc2017_realistic_v1-v2/GEN-SIM-RECO'
     self.data_type        = 'collisions' #'cosmics'
-    self.run_number       = ['306486']
+    self.run_number       = ['1']
     self.CMSSW_version    = 'CMSSW_10_1_0_pre3'
-    self.global_tag       = '101X_dataRun2_Prompt_Candidate_2018_03_26_19_48_11'
+    self.global_tag       = '101X_upgrade2018_realistic_Candidate_2018_03_15_16_26_46'
     self.SCRAM_ARCH       = 'slc6_amd64_gcc630'
 
-    self.script_template  = 'raw' # 'reco' 'raw', 'cosmics', 'test'
+    self.script_template  = 'MC_simhit' # 'reco' 'raw', 'cosmics', 'test', 'MC', 'MC_simhit'
     self.tree_production  = 'Pixel' # 'LA', 'Pixel'
     self.force_all        = False
     self.send_jobs        = True
-    self.number_of_events = '10'
+    self.number_of_events = '10000'
     self.number_of_jobs   = 20
     self.batch            = 'lxbatch' # 'condor' # 
 
-    self.postfix          = 'run_G_test' #'_gainPBPv6_715'
+    self.postfix          = 'mc_evts' #'_gainPBPv6_715'
 
     self.path_working_dir = os.path.dirname(os.path.abspath(__file__))
     self.path_batch       = os.path.join(self.path_working_dir, 'batch')
