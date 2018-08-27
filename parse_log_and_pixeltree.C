@@ -64,8 +64,8 @@ int main(int argc, char **argv){
     t_out->Branch("ClSizeY", &ClsizeY);
     t_out->Branch("SimHitLx", &SimHitLx);
     t_out->Branch("SimHitLy", &SimHitLy);
-    t_out->Branch("GenericLx", &CRLx);
-    t_out->Branch("GenericLy", &CRLy);
+    t_out->Branch("GenericLx", &GenericLx);
+    t_out->Branch("GenericLy", &GenericLy);
     t_out->Branch("CRLx", &CRLx);
     t_out->Branch("CRLy", &CRLy);
     t_out->Branch("onEdge", &onEdge);
