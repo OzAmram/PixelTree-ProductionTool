@@ -1,4 +1,5 @@
 #include <stdlib.h> 
+#include <algorithm>
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -33,12 +34,14 @@ int main(int argc, char **argv){
     TTree *pTree = (TTree *)f_pTree->Get("pixelTree");
 
     Float_t ClRhLx[1000], ClRhLy[1000], ClSimTrEta[1000][10], ClSimHitLx[1000][10], ClSimHitLy[1000][10];
-    Int_t ClRhIsOnEdge[1000], ClN, ClSimHitN[1000], ClType[1000], event, ClDetId[1000];
+    Int_t ClRhIsOnEdge[1000], ClN, ClSimHitN[1000], ClType[1000], event, ClDetId[1000], ClSizeX[1000], ClSizeY[1000];
 
     pTree->SetBranchAddress("event", &event);
     pTree->SetBranchAddress("ClN", &ClN);
     pTree->SetBranchAddress("ClSimHitN", &ClSimHitN);
     pTree->SetBranchAddress("ClType", &ClType);
+    pTree->SetBranchAddress("ClSizeX", &ClSizeX);
+    pTree->SetBranchAddress("ClSizeY", &ClSizeY);
     pTree->SetBranchAddress("ClRhIsOnEdge", &ClRhIsOnEdge);
     pTree->SetBranchAddress("ClRhLx", &ClRhLx);
     pTree->SetBranchAddress("ClRhLy", &ClRhLy);
@@ -50,13 +53,15 @@ int main(int argc, char **argv){
     int pTree_idx = 0;
 
     Int_t detID, onEdge, type, failType, used2D, tempID, spans2ROCs;
-    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy;
+    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY;
 
     TFile *f_out = TFile::Open(outFile_name, "recreate");
     TTree *t_out = new TTree("pixelTree_plus", "Pixel Tree and dead pixel info");
     t_out->Branch("event", &event);
     t_out->Branch("failType", &failType);
     t_out->Branch("used2D", &used2D);
+    t_out->Branch("ClSizeX", &ClsizeX);
+    t_out->Branch("ClSizeY", &ClsizeY);
     t_out->Branch("SimHitLx", &SimHitLx);
     t_out->Branch("SimHitLy", &SimHitLy);
     t_out->Branch("GenericLx", &CRLx);
@@ -78,6 +83,8 @@ int main(int argc, char **argv){
     char * key = "123CRTEST456";
     int nMatched = 0;
     int nFail=0;
+    int nDuplicates=0;
+    std::vector<float> prev_hits;
 
 
     /*
@@ -108,6 +115,13 @@ int main(int argc, char **argv){
             sscanf(log_line, "1D: X,Y = %f, %f", &GenericLx, &GenericLy); 
             fgets(log_line, 100, logFile);
             sscanf(log_line, "CR: X,Y = %f, %f", &CRLx, &CRLy); 
+            if(std::find(prev_hits.begin(), prev_hits.end(), lx*ly) == prev_hits.end()){
+                prev_hits.push_back(lx*ly);
+            }
+            else{
+                nDuplicates++;
+                continue;
+            }
 
 
             //try to match hit to pixel tree
@@ -137,6 +151,8 @@ int main(int argc, char **argv){
             }
             
             //used matched pixeltree hit 
+            ClsizeX = ClSizeX[i];
+            ClsizeY = ClSizeY[i];
             SimHitLx = ClSimHitLx[i][0];
             SimHitLy = ClSimHitLy[i][0];
             detID = ClDetId[i];
@@ -146,7 +162,7 @@ int main(int argc, char **argv){
             t_out->Fill();
         }
     }
-    printf("Exiting sucessfully, matched %i hits and failed on %i hits \n", nMatched, nFail);
+    printf("Exiting sucessfully, matched %i hits and failed on %i hits %i Duplicates \n", nMatched, nFail, nDuplicates);
     f_out->cd();
     t_out->Write();
     f_out->Close();

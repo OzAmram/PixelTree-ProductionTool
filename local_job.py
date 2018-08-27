@@ -135,7 +135,7 @@ process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 process.PixelTree = cms.EDAnalyzer(
     "PixelTree",
     verbose                      = cms.untracked.int32(2),
-    rootFileName                 = cms.untracked.string('PixelTree_deadpixel_test.root'),
+    rootFileName                 = cms.untracked.string('PixelTree_deadpixel_last2cols_aug27.root'),
     phase                        = cms.untracked.int32(1),
     #type                         = cms.untracked.string(getDataset(process.source.fileNames[0])),
     globalTag                    = process.GlobalTag.globaltag,
