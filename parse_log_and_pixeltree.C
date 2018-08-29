@@ -96,6 +96,8 @@ int main(int argc, char **argv){
     }
     */
 
+    int last_match_event=0;
+
 
     while (fgets(log_line, 300, logFile)) {
         //check if line starts with key
@@ -123,43 +125,78 @@ int main(int argc, char **argv){
                 continue;
             }
 
+            int match_idx =-1;
+            //Tries to match all events
+            for(int nTry=0; nTry < pTree_size; nTry++){
+                pTree_idx = (last_match_event + nTry) % pTree_size;
 
+                bool found_match = false;
+                pTree->GetEntry(pTree_idx);
+                for(int i=0; i<ClN; i++){
+                    //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
+                    if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
+                        found_match = true;
+                        match_idx = i;
+                        last_match_event = pTree_idx;
+                        //printf("found in event %i \n", pTree_idx);
+                        break;
+                    }
+                }
+                if(found_match) break;
+            }
+
+            //Version that tries to match to current event and next one only to
+            //save time (seems to perform worse)
             //try to match hit to pixel tree
+            /*
             int i=0;
+            pTree->GetEntry(pTree_idx);
             for(i=0; i<ClN; i++){
                 //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
-                if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])) break;
+                if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
+                    match_idx = i;
+                    break;
+                }
+
             }
             
-            if(i==ClN && pTree_idx < pTree_size){
+            if(match_idx <0 && pTree_idx < pTree_size){
                 //we didn't match in this event, try next one
                 pTree_idx++;
                 pTree->GetEntry(pTree_idx);
                 for(i=0; i<ClN; i++){
                     //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
-                    if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])) break;
+                    if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
+                        match_idx = i;
+                        break;
+                    }
                 }
             }
-            if(i==ClN){
+            */
+            if(match_idx < 0){
                 //we still can't match. Something went wrong
-                printf("Unable to match hit Lx, Ly = %.4f %.4f \n in event %i or %i \n", lx,ly, pTree_idx -1 , pTree_idx);
+                printf("Unable to match hit Lx, Ly = %.4f %.4f \n Likely in event %i or %i \n", lx,ly, pTree_idx -1 , pTree_idx);
                 //go back 1 event to make sure
                 pTree_idx--;
                 pTree->GetEntry(pTree_idx);
                 nFail++;
                 continue;
             }
+            printf("found in event %i \n", pTree_idx);
             
+            //
             //used matched pixeltree hit 
-            ClsizeX = ClSizeX[i];
-            ClsizeY = ClSizeY[i];
-            SimHitLx = ClSimHitLx[i][0];
-            SimHitLy = ClSimHitLy[i][0];
-            detID = ClDetId[i];
-            type = ClType[i];
-            nMatched++;
+            if(match_idx >=0){
+                ClsizeX = ClSizeX[match_idx];
+                ClsizeY = ClSizeY[match_idx];
+                SimHitLx = ClSimHitLx[match_idx][0];
+                SimHitLy = ClSimHitLy[match_idx][0];
+                detID = ClDetId[match_idx];
+                type = ClType[match_idx];
+                nMatched++;
 
-            t_out->Fill();
+                t_out->Fill();
+            }
         }
     }
     printf("Exiting sucessfully, matched %i hits and failed on %i hits %i Duplicates \n", nMatched, nFail, nDuplicates);
