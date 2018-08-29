@@ -33,7 +33,8 @@ int main(int argc, char **argv){
     TFile *f_pTree = TFile::Open(pTreeFile_name);
     TTree *pTree = (TTree *)f_pTree->Get("pixelTree");
 
-    Float_t ClRhLx[1000], ClRhLy[1000], ClSimTrEta[1000][10], ClSimHitLx[1000][10], ClSimHitLy[1000][10];
+    Float_t ClRhLx[1000], ClRhLy[1000], ClSimTrEta[1000][10], ClSimHitLx[1000][10], ClSimHitLy[1000][10],
+            TkEta[1000], TkPhi[1000], TkPt[1000];
     Int_t ClRhIsOnEdge[1000], ClN, ClSimHitN[1000], ClType[1000], event, ClDetId[1000], ClSizeX[1000], ClSizeY[1000];
 
     pTree->SetBranchAddress("event", &event);
@@ -47,13 +48,16 @@ int main(int argc, char **argv){
     pTree->SetBranchAddress("ClRhLy", &ClRhLy);
     pTree->SetBranchAddress("ClSimHitLx", &ClSimHitLx);
     pTree->SetBranchAddress("ClSimHitLy", &ClSimHitLy);
+    pTree->SetBranchAddress("TkEta", &TkEta);
+    pTree->SetBranchAddress("TkPhi", &TkPhi);
+    pTree->SetBranchAddress("TkPt", &TkPt);
     pTree->SetBranchAddress("ClDetId", &ClDetId);
     Long64_t pTree_size  =  pTree->GetEntries();
     pTree->GetEntry(0);
     int pTree_idx = 0;
 
     Int_t detID, onEdge, type, failType, used2D, tempID, spans2ROCs;
-    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY;
+    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY, TrackEta, TrackPhi, TrackPt;
 
     TFile *f_out = TFile::Open(outFile_name, "recreate");
     TTree *t_out = new TTree("pixelTree_plus", "Pixel Tree and dead pixel info");
@@ -66,6 +70,9 @@ int main(int argc, char **argv){
     t_out->Branch("SimHitLy", &SimHitLy);
     t_out->Branch("GenericLx", &GenericLx);
     t_out->Branch("GenericLy", &GenericLy);
+    t_out->Branch("TrackEta", &TrackEta);
+    t_out->Branch("TrackPhi", &TrackPhi);
+    t_out->Branch("TrackPt", &TrackPt);
     t_out->Branch("CRLx", &CRLx);
     t_out->Branch("CRLy", &CRLy);
     t_out->Branch("onEdge", &onEdge);
@@ -133,12 +140,11 @@ int main(int argc, char **argv){
                 bool found_match = false;
                 pTree->GetEntry(pTree_idx);
                 for(int i=0; i<ClN; i++){
-                    //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
                     if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
                         found_match = true;
                         match_idx = i;
                         last_match_event = pTree_idx;
-                        //printf("found in event %i \n", pTree_idx);
+                        //printf("Found Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
                         break;
                     }
                 }
@@ -182,7 +188,7 @@ int main(int argc, char **argv){
                 nFail++;
                 continue;
             }
-            printf("found in event %i \n", pTree_idx);
+            //printf("found in event %i \n", pTree_idx);
             
             //
             //used matched pixeltree hit 
@@ -193,6 +199,9 @@ int main(int argc, char **argv){
                 SimHitLy = ClSimHitLy[match_idx][0];
                 detID = ClDetId[match_idx];
                 type = ClType[match_idx];
+                TrackEta = TkEta[match_idx];
+                TrackPhi = TkPhi[match_idx];
+                TrackPt = TkPt[match_idx];
                 nMatched++;
 
                 t_out->Fill();
