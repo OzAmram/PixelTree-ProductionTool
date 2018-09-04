@@ -31,7 +31,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('CalibTracker.SiPixelESProducers.SiPixel2DTemplateDBObjectESProducer_cfi')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(20)
+    input = cms.untracked.int32(3)
 )
 
 # Input source
@@ -68,7 +68,7 @@ process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 process.PixelTree = cms.EDAnalyzer(
         "PixelTree",
         verbose                      = cms.untracked.int32(10),
-        rootFileName                 = cms.untracked.string('PixelTree_2_10.root'),
+        rootFileName                 = cms.untracked.string('PixelTree_ttbar_deadfistcols_edgeyvar_sep4.root'),
         phase                        = cms.untracked.int32(1),
         #type                         = cms.untracked.string(getDataset(process.source.fileNames[0])),                                                                                                                                                                          
         globalTag                    = process.GlobalTag.globaltag,
@@ -106,7 +106,8 @@ process.mix.digitizers = cms.PSet()
 for a in process.aliases: delattr(process, a)
 process.RandomNumberGeneratorService.restoreStateLabel=cms.untracked.string("randomEngineStateProducer")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v9', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v9', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v7', '')
 
 # Path and EndPath definitions
 process.raw2digi_step = cms.Path(process.RawToDigi)
