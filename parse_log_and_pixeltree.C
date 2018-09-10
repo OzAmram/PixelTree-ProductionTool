@@ -33,9 +33,11 @@ int main(int argc, char **argv){
     TFile *f_pTree = TFile::Open(pTreeFile_name);
     TTree *pTree = (TTree *)f_pTree->Get("pixelTree");
 
-    Float_t ClRhLx[1000], ClRhLy[1000], ClSimTrEta[1000][10], ClSimHitLx[1000][10], ClSimHitLy[1000][10],
-            TkEta[1000], TkPhi[1000], TkPt[1000];
-    Int_t ClRhIsOnEdge[1000], ClN, ClSimHitN[1000], ClType[1000], event, ClDetId[1000], ClSizeX[1000], ClSizeY[1000];
+    const unsigned int MAX_CL = 3000;
+    Float_t ClRhLx[MAX_CL], ClRhLy[MAX_CL], ClSimTrEta[MAX_CL][10], ClSimHitLx[MAX_CL][10], ClSimHitLy[MAX_CL][10],
+            TkEta[MAX_CL], TkPhi[MAX_CL], TkPt[MAX_CL];
+    Int_t ClRhIsOnEdge[MAX_CL], ClN, ClSimHitN[MAX_CL], ClType[MAX_CL], event, ClDetId[MAX_CL], ClSizeX[MAX_CL], ClSizeY[MAX_CL];
+
 
     pTree->SetBranchAddress("event", &event);
     pTree->SetBranchAddress("ClN", &ClN);
@@ -54,7 +56,7 @@ int main(int argc, char **argv){
     pTree->SetBranchAddress("ClDetId", &ClDetId);
     Long64_t pTree_size  =  pTree->GetEntries();
     pTree->GetEntry(0);
-    int pTree_idx = 0;
+    unsigned int pTree_idx = 0;
 
     Int_t detID, onEdge, type, failType, used2D, tempID, spans2ROCs;
     Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY, TrackEta, TrackPhi, TrackPt, proby1d, nydiff;
@@ -85,9 +87,6 @@ int main(int argc, char **argv){
     int roc_num;
     float percent;
 
-    char detid_last[30];
-
-    strcpy(detid_last, "\0");
     bool wrote_out = false;
     char * key = "123CRTEST456";
     int nMatched = 0;
@@ -105,7 +104,7 @@ int main(int argc, char **argv){
     }
     */
 
-    int last_match_event=0;
+    unsigned int last_match_event=0;
 
 
     while (fgets(log_line, 300, logFile)) {
@@ -114,7 +113,7 @@ int main(int argc, char **argv){
             //parse info
             fgets(log_line, 100, logFile);
             sscanf(log_line, "nydiff=%f proby1d=%f \n", &nydiff, &proby1d);
-            printf("log_line = %s \nproby1d=%.2e \n", log_line, proby1d);
+            //printf("log_line = %s \nproby1d=%.2e \n", log_line, proby1d);
             fgets(log_line, 100, logFile);
             sscanf(log_line, "fail_mode=%i, on_edge=%i, used_2d=%i, spans_two_ROCs=%i, detID=%i \n", 
                     &failType, &onEdge, &used2D, &spans2ROCs, &tempID);
@@ -140,11 +139,16 @@ int main(int argc, char **argv){
 
             int match_idx =-1;
             //Tries to match all events
-            for(int nTry=0; nTry < pTree_size; nTry++){
+            for(unsigned int nTry=0; nTry < pTree_size; nTry++){
                 pTree_idx = (last_match_event + nTry) % pTree_size;
+
 
                 bool found_match = false;
                 pTree->GetEntry(pTree_idx);
+                if(ClN > MAX_CL){
+                    printf("ERROR TOO MANY CLUSTERS (%i) Max is %i \n", ClN, MAX_CL);
+                    exit(1);
+                }
                 for(int i=0; i<ClN; i++){
                     if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
                         found_match = true;
@@ -156,40 +160,10 @@ int main(int argc, char **argv){
                 }
                 if(found_match) break;
             }
-
-            //Version that tries to match to current event and next one only to
-            //save time (seems to perform worse)
-            //try to match hit to pixel tree
-            /*
-            int i=0;
-            pTree->GetEntry(pTree_idx);
-            for(i=0; i<ClN; i++){
-                //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
-                if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
-                    match_idx = i;
-                    break;
-                }
-
-            }
-            
-            if(match_idx <0 && pTree_idx < pTree_size){
-                //we didn't match in this event, try next one
-                pTree_idx++;
-                pTree->GetEntry(pTree_idx);
-                for(i=0; i<ClN; i++){
-                    //printf("Event %i Pixel Tree Lx Ly = %.4f %.4f \n", pTree_idx, ClRhLx[i], ClRhLy[i]);
-                    if(isMatched(lx, ly, ClRhLx[i], ClRhLy[i])){
-                        match_idx = i;
-                        break;
-                    }
-                }
-            }
-            */
             if(match_idx < 0){
                 //we still can't match. Something went wrong
-                printf("Unable to match hit Lx, Ly = %.4f %.4f \n Likely in event %i or %i \n", lx,ly, pTree_idx -1 , pTree_idx);
-                //go back 1 event to make sure
-                pTree_idx--;
+                printf("Unable to match hit Lx, Ly = %.4f %.4f \n Likely in event %u \n", lx,ly, last_match_event);
+                pTree_idx = last_match_event;
                 pTree->GetEntry(pTree_idx);
                 nFail++;
                 continue;
