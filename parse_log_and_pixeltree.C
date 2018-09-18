@@ -59,7 +59,7 @@ int main(int argc, char **argv){
     unsigned int pTree_idx = 0;
 
     Int_t detID, onEdge, type, failType, used2D, tempID, spans2ROCs;
-    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY, TrackEta, TrackPhi, TrackPt, proby1d, nydiff;
+    Float_t SimHitLx, SimHitLy, CRLx, CRLy, GenericLx, GenericLy, ClsizeX, ClsizeY, TrackEta, TrackPhi, TrackPt, proby1d, nydiff, qratio;
 
     TFile *f_out = TFile::Open(outFile_name, "recreate");
     TTree *t_out = new TTree("pixelTree_plus", "Pixel Tree and dead pixel info");
@@ -82,6 +82,7 @@ int main(int argc, char **argv){
     t_out->Branch("type", &type);
     t_out->Branch("nydiff", &nydiff);
     t_out->Branch("proby1d", &proby1d);
+    t_out->Branch("qratio", &qratio);
 
     char log_line[300];
     int roc_num;
@@ -112,7 +113,7 @@ int main(int argc, char **argv){
         if(strncmp(log_line, key, strlen(key)) == 0){
             //parse info
             fgets(log_line, 100, logFile);
-            sscanf(log_line, "nydiff=%f proby1d=%f \n", &nydiff, &proby1d);
+            sscanf(log_line, "nydiff=%f proby1d=%f qratio=%f \n", &nydiff, &proby1d, &qratio);
             //printf("log_line = %s \nproby1d=%.2e \n", log_line, proby1d);
             fgets(log_line, 100, logFile);
             sscanf(log_line, "fail_mode=%i, on_edge=%i, used_2d=%i, spans_two_ROCs=%i, detID=%i \n", 
